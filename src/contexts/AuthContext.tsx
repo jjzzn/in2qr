@@ -51,12 +51,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       if (error) return { error };
 
       if (data.user) {
-        await supabase.from('users').insert({
+        const { error: insertError } = await supabase.from('users').insert({
           id: data.user.id,
           email,
           name,
           password: '',
         });
+        
+        if (insertError) {
+          console.error('Failed to create user record:', insertError);
+        }
       }
 
       return { error: null };
