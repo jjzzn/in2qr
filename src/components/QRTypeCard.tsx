@@ -13,19 +13,19 @@ export const QRTypeCard = ({ qrType, onSelect }: QRTypeCardProps) => {
     <button
       onClick={onSelect}
       className="
-        w-full bg-white rounded-xl border-2 border-gray-100 p-6
-        hover:border-primary-500 hover:shadow-lg
+        w-full bg-white rounded-xl border-2 border-gray-100 p-4
+        hover:border-primary-500 hover:shadow-lg hover:bg-orange-50
         transition-all duration-300
-        text-left group
+        group
         animate-fade-in
       "
     >
-      <div className="flex flex-col gap-3">
-        <div className="w-10 h-10 text-primary-500 group-hover:scale-110 transition-transform">
+      <div className="flex flex-col items-center justify-center gap-2 text-center">
+        <div className="w-8 h-8 text-primary-500 group-hover:scale-110 transition-transform">
           <IconComponent className="w-full h-full" />
         </div>
         <div>
-          <h3 className="font-semibold text-gray-900 text-base mb-1">
+          <h3 className="font-semibold text-gray-900 text-sm mb-0.5">
             {qrType.label}
           </h3>
           <p className="text-xs text-gray-500">

@@ -44,7 +44,9 @@ export const Step3Customize = ({ config, onConfigChange, onNext, onBack }: Step3
         <div className="bg-white rounded-xl shadow-lg p-8">
           <h3 className="text-xl font-bold text-gray-900 mb-4">Live Preview</h3>
           <div className="bg-gray-100 rounded-lg p-8 flex items-center justify-center min-h-[400px]">
-            <div ref={qrRef} className="transition-all duration-300" />
+            <div style={{ padding: '20px', backgroundColor: config.bgColor }}>
+              <div ref={qrRef} className="transition-all duration-300" />
+            </div>
           </div>
         </div>
 
@@ -52,20 +54,6 @@ export const Step3Customize = ({ config, onConfigChange, onNext, onBack }: Step3
           <h3 className="text-xl font-bold text-gray-900 mb-6">Customize Your QR Code</h3>
           
           <div className="space-y-6">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Size: {config.size}px
-              </label>
-              <input
-                type="range"
-                min="200"
-                max="800"
-                value={config.size}
-                onChange={(e) => onConfigChange({ size: parseInt(e.target.value) })}
-                className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-primary-500"
-              />
-            </div>
-
             <div className="grid grid-cols-2 gap-4">
               <div className="relative">
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -146,6 +134,52 @@ export const Step3Customize = ({ config, onConfigChange, onNext, onBack }: Step3
                     className={`
                       px-3 py-2 rounded-lg text-xs font-medium transition-all
                       ${config.dotStyle === style
+                        ? 'bg-primary-500 text-white'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      }
+                    `}
+                  >
+                    {style}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Corner Square Style
+              </label>
+              <div className="grid grid-cols-3 gap-2">
+                {(['square', 'extra-rounded', 'dot'] as Array<QRConfig['cornerSquareStyle']>).map((style) => (
+                  <button
+                    key={style}
+                    onClick={() => onConfigChange({ cornerSquareStyle: style })}
+                    className={`
+                      px-3 py-2 rounded-lg text-xs font-medium transition-all
+                      ${config.cornerSquareStyle === style
+                        ? 'bg-primary-500 text-white'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      }
+                    `}
+                  >
+                    {style}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Corner Dot Style
+              </label>
+              <div className="grid grid-cols-2 gap-2">
+                {(['square', 'dot'] as Array<QRConfig['cornerDotStyle']>).map((style) => (
+                  <button
+                    key={style}
+                    onClick={() => onConfigChange({ cornerDotStyle: style })}
+                    className={`
+                      px-3 py-2 rounded-lg text-xs font-medium transition-all
+                      ${config.cornerDotStyle === style
                         ? 'bg-primary-500 text-white'
                         : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                       }

@@ -3,19 +3,21 @@ import { Download, Copy, CheckCircle, Sparkles, Save } from 'lucide-react';
 import type { QRConfig } from '../../types';
 import { createQRCode, downloadQRCode, copyQRToClipboard } from '../../utils/qrCode';
 import { useAuth } from '../../contexts/AuthContext';
-import { saveQRCode } from '../../services/qrCodeService';
+import { saveQRCode, updateQRCode } from '../../services/qrCodeService';
 
 interface Step4DownloadProps {
   config: QRConfig;
+  title: string;
+  editingQRId?: string;
   onCreateAnother: () => void;
+  onDashboardNavigate: () => void;
 }
 
-export const Step4Download = ({ config, onCreateAnother }: Step4DownloadProps) => {
+export const Step4Download = ({ config, title, editingQRId, onCreateAnother, onDashboardNavigate }: Step4DownloadProps) => {
   const [copied, setCopied] = useState(false);
   const [downloading, setDownloading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
-  const [title, setTitle] = useState('');
   const { user } = useAuth();
   const qrRef = useRef<HTMLDivElement>(null);
   const qrCodeInstance = useRef<any>(null);
@@ -65,15 +67,40 @@ export const Step4Download = ({ config, onCreateAnother }: Step4DownloadProps) =
     }
 
     setSaving(true);
-    const { error } = await saveQRCode(config, title, user.id);
+    
+    let error;
+    if (editingQRId) {
+      const result = await updateQRCode(editingQRId, {
+        title,
+        content: { value: config.value },
+        design_settings: {
+          size: config.size,
+          bgColor: config.bgColor,
+          fgColor: config.fgColor,
+          errorCorrectionLevel: config.errorCorrectionLevel,
+          dotStyle: config.dotStyle,
+          cornerSquareStyle: config.cornerSquareStyle,
+          cornerDotStyle: config.cornerDotStyle,
+          logo: config.logo,
+          logoSize: config.logoSize,
+        },
+        redirect_url: config.value,
+      });
+      error = result.error;
+    } else {
+      const result = await saveQRCode(config, title, user.id);
+      error = result.error;
+    }
     
     if (error) {
-      alert('Failed to save QR code: ' + error.message);
+      alert(`Failed to ${editingQRId ? 'update' : 'save'} QR code: ` + error.message);
       setSaving(false);
     } else {
       setSaved(true);
       setSaving(false);
-      setTimeout(() => setSaved(false), 3000);
+      setTimeout(() => {
+        onDashboardNavigate();
+      }, 1000);
     }
   };
 
@@ -112,20 +139,12 @@ export const Step4Download = ({ config, onCreateAnother }: Step4DownloadProps) =
         <div className="space-y-6">
           {user && (
             <div className="bg-white rounded-xl shadow-lg p-8">
-              <h3 className="text-xl font-bold text-gray-900 mb-6">Save to Account</h3>
+              <h3 className="text-xl font-bold text-gray-900 mb-6">Save to Dashboard</h3>
               
               <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    QR Code Title
-                  </label>
-                  <input
-                    type="text"
-                    value={title}
-                    onChange={(e) => setTitle(e.target.value)}
-                    placeholder="My QR Code"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition-all"
-                  />
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <p className="text-sm text-gray-600 mb-1">QR Code Title</p>
+                  <p className="font-semibold text-gray-900">{title || 'Untitled QR Code'}</p>
                 </div>
 
                 <button
@@ -136,12 +155,12 @@ export const Step4Download = ({ config, onCreateAnother }: Step4DownloadProps) =
                   {saved ? (
                     <>
                       <CheckCircle className="w-5 h-5" />
-                      Saved to Dashboard!
+                      {editingQRId ? 'Updated!' : 'Saved to Dashboard!'}
                     </>
                   ) : (
                     <>
                       <Save className="w-5 h-5" />
-                      {saving ? 'Saving...' : 'Save to Dashboard'}
+                      {saving ? (editingQRId ? 'Updating...' : 'Saving...') : (editingQRId ? 'Update QR Code' : 'Save to Dashboard')}
                     </>
                   )}
                 </button>

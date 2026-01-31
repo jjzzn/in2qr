@@ -6,7 +6,9 @@ import type { QRCodeType, WiFiConfig } from '../../types';
 interface Step2AddContentProps {
   selectedType: QRCodeType;
   value: string;
+  title: string;
   onValueChange: (value: string) => void;
+  onTitleChange: (title: string) => void;
   onNext: () => void;
   onBack: () => void;
 }
@@ -14,7 +16,9 @@ interface Step2AddContentProps {
 export const Step2AddContent = ({
   selectedType,
   value,
+  title,
   onValueChange,
+  onTitleChange,
   onNext,
   onBack,
 }: Step2AddContentProps) => {
@@ -34,9 +38,9 @@ export const Step2AddContent = ({
     onValueChange(wifiString);
   };
 
-  const isValid = selectedType === 'wifi' 
+  const isValid = title.trim() !== '' && (selectedType === 'wifi' 
     ? wifiConfig.ssid.trim() !== '' && (wifiConfig.security === 'nopass' || wifiConfig.password.trim() !== '')
-    : value.trim() !== '';
+    : value.trim() !== '');
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-8 animate-fade-in">
@@ -47,6 +51,19 @@ export const Step2AddContent = ({
         <p className="text-gray-600 mb-6">
           {qrType?.description}
         </p>
+
+        <div className="mb-6">
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            QR Code Title
+          </label>
+          <input
+            type="text"
+            value={title}
+            onChange={(e) => onTitleChange(e.target.value)}
+            placeholder="Enter a title for your QR code"
+            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition-all"
+          />
+        </div>
 
         {selectedType === 'wifi' ? (
           <div className="space-y-4">
@@ -93,10 +110,26 @@ export const Step2AddContent = ({
               </div>
             )}
           </div>
+        ) : selectedType === 'website' || selectedType === 'pdf' || selectedType === 'video' || selectedType === 'image' ? (
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              {selectedType === 'website' ? 'Website URL' : selectedType === 'pdf' ? 'PDF URL' : selectedType === 'video' ? 'Video URL' : 'Image URL'}
+            </label>
+            <div className="flex items-center border border-gray-300 rounded-lg focus-within:ring-2 focus-within:ring-primary-500 focus-within:border-transparent">
+              <span className="px-4 py-3 text-gray-500 bg-gray-50 border-r border-gray-300">https://</span>
+              <input
+                type="text"
+                value={value.startsWith('https://') ? value.substring(8) : value}
+                onChange={(e) => onValueChange('https://' + e.target.value)}
+                placeholder={qrType?.placeholder?.replace('https://', '')}
+                className="flex-1 px-4 py-3 outline-none"
+              />
+            </div>
+          </div>
         ) : (
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Content
+              {selectedType === 'email' ? 'Email Address' : selectedType === 'phone' ? 'Phone Number' : selectedType === 'whatsapp' ? 'WhatsApp Number' : selectedType === 'text' ? 'Text Message' : selectedType === 'location' ? 'GPS Coordinates' : 'Content'}
             </label>
             <textarea
               value={value}
