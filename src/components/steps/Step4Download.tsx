@@ -1,0 +1,245 @@
+import { useState, useEffect, useRef } from 'react';
+import { Download, Copy, CheckCircle, Sparkles, Save } from 'lucide-react';
+import type { QRConfig } from '../../types';
+import { createQRCode, downloadQRCode, copyQRToClipboard } from '../../utils/qrCode';
+import { useAuth } from '../../contexts/AuthContext';
+import { saveQRCode } from '../../services/qrCodeService';
+
+interface Step4DownloadProps {
+  config: QRConfig;
+  onCreateAnother: () => void;
+}
+
+export const Step4Download = ({ config, onCreateAnother }: Step4DownloadProps) => {
+  const [copied, setCopied] = useState(false);
+  const [downloading, setDownloading] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const [title, setTitle] = useState('');
+  const { user } = useAuth();
+  const qrRef = useRef<HTMLDivElement>(null);
+  const qrCodeInstance = useRef<any>(null);
+
+  useEffect(() => {
+    if (qrRef.current && config.value) {
+      qrRef.current.innerHTML = '';
+      qrCodeInstance.current = createQRCode(config);
+      qrCodeInstance.current.append(qrRef.current);
+    }
+  }, [config]);
+
+  const handleDownload = async () => {
+    if (!qrCodeInstance.current) return;
+    
+    setDownloading(true);
+    try {
+      await downloadQRCode(qrCodeInstance.current, config.format);
+    } catch (error) {
+      console.error('Download failed:', error);
+    } finally {
+      setDownloading(false);
+    }
+  };
+
+  const handleCopy = async () => {
+    if (!qrCodeInstance.current) return;
+    
+    try {
+      await copyQRToClipboard(qrCodeInstance.current);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (error) {
+      console.error('Copy failed:', error);
+    }
+  };
+
+  const handleSave = async () => {
+    if (!user) {
+      alert('Please sign in to save QR codes');
+      return;
+    }
+
+    if (!title.trim()) {
+      alert('Please enter a title for your QR code');
+      return;
+    }
+
+    setSaving(true);
+    const { error } = await saveQRCode(config, title, user.id);
+    
+    if (error) {
+      alert('Failed to save QR code: ' + error.message);
+      setSaving(false);
+    } else {
+      setSaved(true);
+      setSaving(false);
+      setTimeout(() => setSaved(false), 3000);
+    }
+  };
+
+  const formats: Array<QRConfig['format']> = ['png', 'svg', 'jpeg', 'webp'];
+
+  return (
+    <div className="max-w-6xl mx-auto px-4 py-8 animate-fade-in">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div className="space-y-6">
+          <div className="bg-white rounded-xl shadow-lg p-8">
+            <h3 className="text-xl font-bold text-gray-900 mb-4">Your QR Code</h3>
+            <div className="bg-gray-100 rounded-lg p-8 flex items-center justify-center">
+              <div ref={qrRef} />
+            </div>
+          </div>
+
+          <div className="bg-white rounded-xl shadow-lg p-6">
+            <h4 className="font-semibold text-gray-900 mb-4">QR Code Details</h4>
+            <div className="space-y-2 text-sm">
+              <div className="flex justify-between">
+                <span className="text-gray-600">Size:</span>
+                <span className="font-medium">{config.size}px</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-600">Type:</span>
+                <span className="font-medium capitalize">{config.type}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-600">Error Correction:</span>
+                <span className="font-medium">{config.errorCorrectionLevel}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="space-y-6">
+          {user && (
+            <div className="bg-white rounded-xl shadow-lg p-8">
+              <h3 className="text-xl font-bold text-gray-900 mb-6">Save to Account</h3>
+              
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    QR Code Title
+                  </label>
+                  <input
+                    type="text"
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                    placeholder="My QR Code"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition-all"
+                  />
+                </div>
+
+                <button
+                  onClick={handleSave}
+                  disabled={saving || saved || !title.trim()}
+                  className="w-full flex items-center justify-center gap-2 px-6 py-4 bg-green-500 hover:bg-green-600 text-white rounded-lg transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {saved ? (
+                    <>
+                      <CheckCircle className="w-5 h-5" />
+                      Saved to Dashboard!
+                    </>
+                  ) : (
+                    <>
+                      <Save className="w-5 h-5" />
+                      {saving ? 'Saving...' : 'Save to Dashboard'}
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          )}
+
+          <div className="bg-white rounded-xl shadow-lg p-8">
+            <h3 className="text-xl font-bold text-gray-900 mb-6">Download Options</h3>
+            
+            <div className="space-y-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-3">
+                  Select Format
+                </label>
+                <div className="grid grid-cols-4 gap-2">
+                  {formats.map((format) => (
+                    <button
+                      key={format}
+                      onClick={() => {}}
+                      className={`
+                        px-3 py-2 rounded-lg text-sm font-medium transition-all uppercase
+                        ${config.format === format
+                          ? 'bg-primary-500 text-white'
+                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                        }
+                      `}
+                    >
+                      {format}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <button
+                  onClick={handleDownload}
+                  disabled={downloading}
+                  className="w-full flex items-center justify-center gap-2 px-6 py-4 bg-primary-500 hover:bg-primary-600 text-white rounded-lg transition-colors font-medium disabled:opacity-50"
+                >
+                  <Download className="w-5 h-5" />
+                  {downloading ? 'Downloading...' : 'Download QR Code'}
+                </button>
+
+                <button
+                  onClick={handleCopy}
+                  className="w-full flex items-center justify-center gap-2 px-6 py-4 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors font-medium"
+                >
+                  {copied ? (
+                    <>
+                      <CheckCircle className="w-5 h-5 text-green-600" />
+                      <span className="text-green-600">Copied!</span>
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="w-5 h-5" />
+                      Copy to Clipboard
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-gradient-to-br from-primary-500 to-primary-600 rounded-xl shadow-lg p-6 text-white">
+            <h4 className="font-semibold mb-3 flex items-center gap-2">
+              <Sparkles className="w-5 h-5" />
+              Pro Tips
+            </h4>
+            <ul className="space-y-2 text-sm">
+              <li className="flex items-start gap-2">
+                <span className="text-primary-200">•</span>
+                <span>Test your QR code before printing</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="text-primary-200">•</span>
+                <span>Use high error correction for outdoor use</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="text-primary-200">•</span>
+                <span>PNG format is best for printing</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="text-primary-200">•</span>
+                <span>SVG format is scalable without quality loss</span>
+              </li>
+            </ul>
+          </div>
+
+          <button
+            onClick={onCreateAnother}
+            className="w-full flex items-center justify-center gap-2 px-6 py-4 bg-gradient-to-r from-primary-500 to-primary-600 hover:from-primary-600 hover:to-primary-700 text-white rounded-lg transition-all font-medium shadow-lg"
+          >
+            <Sparkles className="w-5 h-5" />
+            Create Another QR Code
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};

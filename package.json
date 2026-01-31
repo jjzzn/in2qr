@@ -1,0 +1,39 @@
+{
+  "name": "windsurf-project-2",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "lint": "eslint .",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "qr-code-styling": "^1.6.0",
+    "react-colorful": "^5.6.1",
+    "lucide-react": "^0.263.1",
+    "file-saver": "^2.0.5",
+    "@supabase/supabase-js": "^2.39.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.1",
+    "@types/node": "^20.0.0",
+    "@types/react": "^18.2.0",
+    "@types/react-dom": "^18.2.0",
+    "@types/file-saver": "^2.0.5",
+    "@vitejs/plugin-react": "^4.0.0",
+    "autoprefixer": "^10.4.14",
+    "eslint": "^9.39.1",
+    "eslint-plugin-react-hooks": "^7.0.1",
+    "eslint-plugin-react-refresh": "^0.4.24",
+    "globals": "^16.5.0",
+    "postcss": "^8.4.24",
+    "tailwindcss": "^3.3.0",
+    "typescript": "~5.0.0",
+    "typescript-eslint": "^8.46.4",
+    "vite": "^4.4.0"
+  }
+}
