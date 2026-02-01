@@ -119,8 +119,13 @@ export const Step2AddContent = ({
               <span className="px-4 py-3 text-gray-500 bg-gray-50 border-r border-gray-300">https://</span>
               <input
                 type="text"
-                value={value.startsWith('https://') ? value.substring(8) : value}
-                onChange={(e) => onValueChange('https://' + e.target.value)}
+                value={value.startsWith('https://') ? value.substring(8) : value.startsWith('http://') ? value.substring(7) : value}
+                onChange={(e) => {
+                  const inputValue = e.target.value;
+                  // Remove any protocol prefix if user pastes full URL
+                  const cleanValue = inputValue.replace(/^(https?:\/\/)/, '');
+                  onValueChange('https://' + cleanValue);
+                }}
                 placeholder={qrType?.placeholder?.replace('https://', '')}
                 className="flex-1 px-4 py-3 outline-none"
               />

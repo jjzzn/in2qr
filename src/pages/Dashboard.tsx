@@ -218,7 +218,7 @@ const QRCodeCard = ({ qr, config, isExpanded, onToggleExpand, onDownload, onDele
               href={qr.redirect_url} 
               target="_blank" 
               rel="noopener noreferrer"
-              onClick={async (e) => {
+              onClick={async (_) => {
                 // Track scan count when clicking the link
                 try {
                   const { incrementScanCount } = await import('../services/qrCodeService');

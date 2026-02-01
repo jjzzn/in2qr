@@ -21,7 +21,7 @@ export const StepProgress = ({ currentStep, completedSteps, onStepClick }: StepP
   return (
     <div className="w-full max-w-5xl mx-auto px-4 py-8">
       <div className="relative flex items-start justify-between">
-        {steps.map((step, index) => (
+        {steps.map((step, _) => (
           <div key={step.number} className="flex flex-col items-center" style={{ flex: '1' }}>
             <button
               onClick={() => isStepClickable(step.number as WizardStep) && onStepClick(step.number as WizardStep)}
@@ -51,7 +51,7 @@ export const StepProgress = ({ currentStep, completedSteps, onStepClick }: StepP
         ))}
         
         <div className="absolute top-6 left-0 right-0 flex items-center px-12" style={{ zIndex: 0 }}>
-          {steps.slice(0, -1).map((step, index) => (
+          {steps.slice(0, -1).map((step, _) => (
             <div
               key={`line-${step.number}`}
               className={`h-1 transition-all duration-300 ${
