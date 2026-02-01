@@ -26,6 +26,15 @@ export interface WiFiConfig {
   password: string;
 }
 
+export interface BusinessConfig {
+  image: string;
+  company: string;
+  title: string;
+  subtitle: string;
+  buttonText: string;
+  buttonUrl: string;
+}
+
 export interface QRType {
   id: QRCodeType;
   label: string;

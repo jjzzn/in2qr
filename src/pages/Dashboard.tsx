@@ -175,17 +175,16 @@ const QRCodeCard = ({ qr, config, isExpanded, onToggleExpand, onDownload, onDele
     });
   };
 
-  const shortLinkUrl = `https://in2qr.com/${qr.short_code}`;
+  // For now, the short link points directly to redirect_url
+  // In production, this would be https://in2qr.com/r/{short_code} that tracks and redirects
+  const shortLinkUrl = `${window.location.origin}/qr/${qr.short_code}`;
 
   return (
     <div className="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow">
       <div className="p-6">
         <div className="flex items-start justify-between mb-4">
           <div className="flex-1">
-            <h3 className="font-semibold text-gray-900 mb-1">{qr.title}</h3>
-            <span className="inline-block px-2 py-1 bg-primary-100 text-primary-700 text-xs rounded-full">
-              {qr.qr_type}
-            </span>
+            <h3 className="font-semibold text-gray-900">{qr.title}</h3>
           </div>
           <button
             onClick={onToggleExpand}
@@ -196,9 +195,7 @@ const QRCodeCard = ({ qr, config, isExpanded, onToggleExpand, onDownload, onDele
         </div>
 
         <div className="bg-gray-50 rounded-lg p-4 flex items-center justify-center mb-4 relative">
-          <div style={{ padding: '10px', backgroundColor: config.bgColor }}>
-            <div ref={qrRef} style={{ width: '120px', height: '120px' }} />
-          </div>
+          <div ref={qrRef} style={{ width: '120px', height: '120px' }} />
           <div className="absolute top-2 right-2">
             <span className="inline-block px-2 py-1 bg-primary-100 text-primary-700 text-xs rounded-full font-medium">
               {qr.qr_type}
@@ -221,6 +218,15 @@ const QRCodeCard = ({ qr, config, isExpanded, onToggleExpand, onDownload, onDele
               href={qr.redirect_url} 
               target="_blank" 
               rel="noopener noreferrer"
+              onClick={async (e) => {
+                // Track scan count when clicking the link
+                try {
+                  const { incrementScanCount } = await import('../services/qrCodeService');
+                  await incrementScanCount(qr.short_code);
+                } catch (error) {
+                  console.error('Failed to increment scan count:', error);
+                }
+              }}
               className="font-mono text-xs text-primary-600 hover:text-primary-700 hover:underline flex items-center gap-1"
             >
               {qr.short_code}

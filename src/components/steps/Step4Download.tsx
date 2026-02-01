@@ -24,20 +24,29 @@ export const Step4Download = ({ config, title, editingQRId, onCreateAnother, onD
 
   useEffect(() => {
     if (qrRef.current && config.value) {
-      qrRef.current.innerHTML = '';
-      qrCodeInstance.current = createQRCode(config);
-      qrCodeInstance.current.append(qrRef.current);
+      try {
+        qrRef.current.innerHTML = '';
+        qrCodeInstance.current = createQRCode(config);
+        qrCodeInstance.current.append(qrRef.current);
+      } catch (error) {
+        console.error('Failed to create QR code:', error);
+        console.log('Config:', config);
+      }
     }
   }, [config]);
 
   const handleDownload = async () => {
-    if (!qrCodeInstance.current) return;
+    if (!qrCodeInstance.current) {
+      alert('QR code not ready. Please wait a moment and try again.');
+      return;
+    }
     
     setDownloading(true);
     try {
       await downloadQRCode(qrCodeInstance.current, config.format);
     } catch (error) {
       console.error('Download failed:', error);
+      alert('Failed to download QR code. Please try again.');
     } finally {
       setDownloading(false);
     }
@@ -70,6 +79,16 @@ export const Step4Download = ({ config, title, editingQRId, onCreateAnother, onD
     
     let error;
     if (editingQRId) {
+      // Format redirect_url based on QR type
+      let redirectUrl = config.value;
+      if (config.type === 'email') {
+        redirectUrl = `mailto:${config.value}`;
+      } else if (config.type === 'phone') {
+        redirectUrl = `tel:${config.value}`;
+      } else if (config.type === 'whatsapp') {
+        redirectUrl = `https://wa.me/${config.value.replace(/[^0-9]/g, '')}`;
+      }
+      
       const result = await updateQRCode(editingQRId, {
         title,
         content: { value: config.value },
@@ -84,7 +103,7 @@ export const Step4Download = ({ config, title, editingQRId, onCreateAnother, onD
           logo: config.logo,
           logoSize: config.logoSize,
         },
-        redirect_url: config.value,
+        redirect_url: redirectUrl,
       });
       error = result.error;
     } else {
@@ -113,7 +132,9 @@ export const Step4Download = ({ config, title, editingQRId, onCreateAnother, onD
           <div className="bg-white rounded-xl shadow-lg p-8">
             <h3 className="text-xl font-bold text-gray-900 mb-4">Your QR Code</h3>
             <div className="bg-gray-100 rounded-lg p-8 flex items-center justify-center">
-              <div ref={qrRef} />
+              <div style={{ padding: '20px', backgroundColor: config.bgColor }}>
+                <div ref={qrRef} />
+              </div>
             </div>
           </div>
 

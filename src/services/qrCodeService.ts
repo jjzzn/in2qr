@@ -34,6 +34,16 @@ export const saveQRCode = async (
   try {
     const shortCode = generateShortCode();
     
+    // Format redirect_url based on QR type
+    let redirectUrl = config.value;
+    if (config.type === 'email') {
+      redirectUrl = `mailto:${config.value}`;
+    } else if (config.type === 'phone') {
+      redirectUrl = `tel:${config.value}`;
+    } else if (config.type === 'whatsapp') {
+      redirectUrl = `https://wa.me/${config.value.replace(/[^0-9]/g, '')}`;
+    }
+    
     const { data, error } = await supabase
       .from('qr_codes')
       .insert({
@@ -55,7 +65,7 @@ export const saveQRCode = async (
           logoSize: config.logoSize,
         },
         short_code: shortCode,
-        redirect_url: config.value,
+        redirect_url: redirectUrl,
         is_dynamic: true,
       })
       .select()
