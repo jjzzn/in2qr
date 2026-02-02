@@ -8,13 +8,13 @@ import type { QRConfig } from '../types';
 interface DashboardProps {
   onCreateNew: () => void;
   onEditQR?: (qr: SavedQRCode) => void;
+  onViewAnalytics?: (qrId: string) => void;
 }
 
-export const Dashboard = ({ onCreateNew, onEditQR }: DashboardProps) => {
+export const Dashboard = ({ onCreateNew, onEditQR, onViewAnalytics }: DashboardProps) => {
   const { user } = useAuth();
   const [qrCodes, setQrCodes] = useState<SavedQRCode[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedQR, setSelectedQR] = useState<SavedQRCode | null>(null);
 
   useEffect(() => {
     loadQRCodes();
@@ -131,11 +131,10 @@ export const Dashboard = ({ onCreateNew, onEditQR }: DashboardProps) => {
                   key={qr.id}
                   qr={qr}
                   config={qrConfig}
-                  isExpanded={selectedQR?.id === qr.id}
-                  onToggleExpand={() => setSelectedQR(selectedQR?.id === qr.id ? null : qr)}
                   onDownload={() => handleDownload(qr)}
                   onDelete={() => handleDelete(qr.id)}
                   onEdit={() => onEditQR?.(qr)}
+                  onViewAnalytics={() => onViewAnalytics?.(qr.id)}
                 />
               );
             })}
@@ -149,14 +148,13 @@ export const Dashboard = ({ onCreateNew, onEditQR }: DashboardProps) => {
 interface QRCodeCardProps {
   qr: SavedQRCode;
   config: QRConfig;
-  isExpanded: boolean;
-  onToggleExpand: () => void;
   onDownload: () => void;
   onDelete: () => void;
   onEdit: () => void;
+  onViewAnalytics: () => void;
 }
 
-const QRCodeCard = ({ qr, config, isExpanded, onToggleExpand, onDownload, onDelete, onEdit }: QRCodeCardProps) => {
+const QRCodeCard = ({ qr, config, onDownload, onDelete, onEdit, onViewAnalytics }: QRCodeCardProps) => {
   const qrRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -175,10 +173,6 @@ const QRCodeCard = ({ qr, config, isExpanded, onToggleExpand, onDownload, onDele
     });
   };
 
-  // For now, the short link points directly to redirect_url
-  // In production, this would be https://in2qr.com/r/{short_code} that tracks and redirects
-  const shortLinkUrl = `${window.location.origin}/qr/${qr.short_code}`;
-
   return (
     <div className="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow">
       <div className="p-6">
@@ -187,8 +181,9 @@ const QRCodeCard = ({ qr, config, isExpanded, onToggleExpand, onDownload, onDele
             <h3 className="font-semibold text-gray-900">{qr.title}</h3>
           </div>
           <button
-            onClick={onToggleExpand}
+            onClick={onViewAnalytics}
             className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+            title="View Analytics"
           >
             <Eye className="w-5 h-5 text-gray-600" />
           </button>
@@ -258,26 +253,6 @@ const QRCodeCard = ({ qr, config, isExpanded, onToggleExpand, onDownload, onDele
           </button>
         </div>
       </div>
-
-      {isExpanded && (
-        <div className="border-t border-gray-200 p-4 bg-gray-50">
-          <div className="text-sm">
-            <p className="text-gray-600 mb-2">Destination:</p>
-            <p className="text-gray-900 break-all mb-4">{qr.content.value}</p>
-            <p className="text-gray-600 mb-2">Short Link:</p>
-            <a 
-              href={shortLinkUrl} 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 text-primary-600 hover:text-primary-700 hover:underline break-all cursor-pointer relative z-10"
-              style={{ wordBreak: 'break-all' }}
-            >
-              <span className="break-all">{shortLinkUrl}</span>
-              <ExternalLink className="w-4 h-4 flex-shrink-0" />
-            </a>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

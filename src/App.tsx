@@ -10,10 +10,11 @@ import { Login } from './pages/Login';
 import { Register } from './pages/Register';
 import { Dashboard } from './pages/Dashboard';
 import { QRRedirect } from './pages/QRRedirect';
+import { QRAnalytics } from './pages/QRAnalytics';
 import type { WizardStep, QRCodeType, QRConfig } from './types';
 import type { SavedQRCode } from './services/qrCodeService';
 
-type AppView = 'generator' | 'login' | 'register' | 'dashboard' | 'qr-redirect';
+type AppView = 'generator' | 'login' | 'register' | 'dashboard' | 'qr-redirect' | 'analytics';
 
 function AppContent() {
   const [currentView, setCurrentView] = useState<AppView>(() => {
@@ -40,6 +41,7 @@ function AppContent() {
   });
   const [qrTitle, setQrTitle] = useState('');
   const [editingQR, setEditingQR] = useState<SavedQRCode | null>(null);
+  const [selectedQRId, setSelectedQRId] = useState<string>('');
 
   const handleSelectType = (type: QRCodeType) => {
     setConfig({ ...config, type, value: '' });
@@ -162,6 +164,10 @@ function AppContent() {
             setCurrentView('generator');
           }}
           onEditQR={handleEditQR}
+          onViewAnalytics={(qrId) => {
+            setSelectedQRId(qrId);
+            setCurrentView('analytics');
+          }}
         />
       </>
     );
@@ -169,6 +175,10 @@ function AppContent() {
 
   if (currentView === 'qr-redirect') {
     return <QRRedirect />;
+  }
+
+  if (currentView === 'analytics' && selectedQRId) {
+    return <QRAnalytics qrId={selectedQRId} onBack={() => setCurrentView('dashboard')} />;
   }
 
   return (
