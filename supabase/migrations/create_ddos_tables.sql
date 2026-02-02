@@ -31,29 +31,58 @@ CREATE INDEX IF NOT EXISTS idx_security_events_created ON security_events(create
 ALTER TABLE ip_blacklist ENABLE ROW LEVEL SECURITY;
 ALTER TABLE security_events ENABLE ROW LEVEL SECURITY;
 
--- Create policies for ip_blacklist (allow authenticated users to read)
-CREATE POLICY "Allow authenticated users to read ip blacklist"
+-- Create policies for ip_blacklist
+-- Drop existing policies if they exist
+DROP POLICY IF EXISTS "Allow authenticated users to read ip blacklist" ON ip_blacklist;
+DROP POLICY IF EXISTS "Allow all users to read ip blacklist" ON ip_blacklist;
+DROP POLICY IF EXISTS "Allow authenticated users to insert ip blacklist" ON ip_blacklist;
+DROP POLICY IF EXISTS "Allow service role to manage ip blacklist" ON ip_blacklist;
+DROP POLICY IF EXISTS "Allow service role full access to ip blacklist" ON ip_blacklist;
+
+-- Allow all users (including anonymous) to read blacklist
+CREATE POLICY "Allow all users to read ip blacklist"
   ON ip_blacklist
   FOR SELECT
-  TO authenticated
   USING (true);
 
--- Create policies for security_events (allow authenticated users to read)
-CREATE POLICY "Allow authenticated users to read security events"
-  ON security_events
-  FOR SELECT
+-- Allow authenticated users to insert into blacklist
+CREATE POLICY "Allow authenticated users to insert ip blacklist"
+  ON ip_blacklist
+  FOR INSERT
   TO authenticated
-  USING (true);
+  WITH CHECK (true);
 
--- Allow service role to insert/update/delete
-CREATE POLICY "Allow service role to manage ip blacklist"
+-- Allow service role full access
+CREATE POLICY "Allow service role full access to ip blacklist"
   ON ip_blacklist
   FOR ALL
   TO service_role
   USING (true)
   WITH CHECK (true);
 
-CREATE POLICY "Allow service role to manage security events"
+-- Create policies for security_events
+-- Drop existing policies if they exist
+DROP POLICY IF EXISTS "Allow authenticated users to read security events" ON security_events;
+DROP POLICY IF EXISTS "Allow all users to read security events" ON security_events;
+DROP POLICY IF EXISTS "Allow authenticated users to insert security events" ON security_events;
+DROP POLICY IF EXISTS "Allow service role to manage security events" ON security_events;
+DROP POLICY IF EXISTS "Allow service role full access to security events" ON security_events;
+
+-- Allow all users (including anonymous) to read security events
+CREATE POLICY "Allow all users to read security events"
+  ON security_events
+  FOR SELECT
+  USING (true);
+
+-- Allow authenticated users to insert security events
+CREATE POLICY "Allow authenticated users to insert security events"
+  ON security_events
+  FOR INSERT
+  TO authenticated
+  WITH CHECK (true);
+
+-- Allow service role full access
+CREATE POLICY "Allow service role full access to security events"
   ON security_events
   FOR ALL
   TO service_role

@@ -11,6 +11,12 @@ ON CONFLICT (id) DO NOTHING;
 
 -- Storage policies for qr-assets bucket
 
+-- Drop existing policies if they exist
+DROP POLICY IF EXISTS "Public read access for qr-assets" ON storage.objects;
+DROP POLICY IF EXISTS "Authenticated users can upload qr-assets" ON storage.objects;
+DROP POLICY IF EXISTS "Authenticated users can update their qr-assets" ON storage.objects;
+DROP POLICY IF EXISTS "Authenticated users can delete their qr-assets" ON storage.objects;
+
 -- Allow public read access
 CREATE POLICY "Public read access for qr-assets"
 ON storage.objects FOR SELECT

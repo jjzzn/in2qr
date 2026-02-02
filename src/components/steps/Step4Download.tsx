@@ -4,7 +4,6 @@ import type { QRConfig } from '../../types';
 import { createQRCode, downloadQRCode, copyQRToClipboard } from '../../utils/qrCode';
 import { useAuth } from '../../contexts/AuthContext';
 import { saveQRCode, updateQRCode } from '../../services/qrCodeService';
-import { checkDDoSProtection } from '../../lib/ddosProtection';
 import { uploadQRCodeAssets } from '../../utils/qrCodeStorage';
 
 interface Step4DownloadProps {
@@ -86,17 +85,6 @@ export const Step4Download = ({ config, title, editingQRId, onCreateAnother, onD
     setSaving(true);
     
     try {
-      // Check DDoS protection before creating new QR code (skip for edits)
-      if (!editingQRId) {
-        const ddosCheck = await checkDDoSProtection('/api/create-qr');
-        
-        if (!ddosCheck.allowed) {
-          setSaving(false);
-          alert(`🛡️ Request blocked\n\n${ddosCheck.reason || 'Too many requests. Please try again later.'}`);
-          return;
-        }
-      }
-      
       // Upload QR code and logo to Storage
       const assets = await uploadQRCodeAssets(
         qrCodeInstance.current,

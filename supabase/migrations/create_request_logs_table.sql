@@ -23,6 +23,35 @@ COMMENT ON COLUMN request_logs.method IS 'HTTP method (GET, POST, etc.)';
 COMMENT ON COLUMN request_logs.user_agent IS 'Client user agent string';
 COMMENT ON COLUMN request_logs.timestamp IS 'When the request was made';
 
+-- Enable Row Level Security
+ALTER TABLE request_logs ENABLE ROW LEVEL SECURITY;
+
+-- Drop existing policies if they exist
+DROP POLICY IF EXISTS "Allow all users to read request logs" ON request_logs;
+DROP POLICY IF EXISTS "Allow authenticated users to insert request logs" ON request_logs;
+DROP POLICY IF EXISTS "Allow service role full access to request logs" ON request_logs;
+
+-- Allow all users to read request logs (for rate limit checking)
+CREATE POLICY "Allow all users to read request logs"
+  ON request_logs
+  FOR SELECT
+  USING (true);
+
+-- Allow authenticated users to insert request logs
+CREATE POLICY "Allow authenticated users to insert request logs"
+  ON request_logs
+  FOR INSERT
+  TO authenticated
+  WITH CHECK (true);
+
+-- Allow service role full access
+CREATE POLICY "Allow service role full access to request logs"
+  ON request_logs
+  FOR ALL
+  TO service_role
+  USING (true)
+  WITH CHECK (true);
+
 -- Create function to auto-cleanup old logs (keep only last 7 days)
 CREATE OR REPLACE FUNCTION cleanup_old_request_logs()
 RETURNS void AS $$
