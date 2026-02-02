@@ -5,6 +5,7 @@ import { createQRCode, downloadQRCode, copyQRToClipboard } from '../../utils/qrC
 import { useAuth } from '../../contexts/AuthContext';
 import { saveQRCode, updateQRCode } from '../../services/qrCodeService';
 import { checkDDoSProtection } from '../../lib/ddosProtection';
+import { uploadQRCodeAssets } from '../../utils/qrCodeStorage';
 
 interface Step4DownloadProps {
   config: QRConfig;
@@ -77,62 +78,88 @@ export const Step4Download = ({ config, title, editingQRId, onCreateAnother, onD
       return;
     }
 
+    if (!qrCodeInstance.current) {
+      alert('QR code not ready. Please wait a moment and try again.');
+      return;
+    }
+
     setSaving(true);
     
-    // Check DDoS protection before creating new QR code (skip for edits)
-    if (!editingQRId) {
-      const ddosCheck = await checkDDoSProtection('/api/create-qr');
+    try {
+      // Check DDoS protection before creating new QR code (skip for edits)
+      if (!editingQRId) {
+        const ddosCheck = await checkDDoSProtection('/api/create-qr');
+        
+        if (!ddosCheck.allowed) {
+          setSaving(false);
+          alert(`🛡️ Request blocked\n\n${ddosCheck.reason || 'Too many requests. Please try again later.'}`);
+          return;
+        }
+      }
       
-      if (!ddosCheck.allowed) {
+      // Upload QR code and logo to Storage
+      const assets = await uploadQRCodeAssets(
+        qrCodeInstance.current,
+        config.logo,
+        user.id
+      );
+      
+      let error;
+      if (editingQRId) {
+        // Format redirect_url based on QR type
+        let redirectUrl = config.value;
+        if (config.type === 'email') {
+          redirectUrl = `mailto:${config.value}`;
+        } else if (config.type === 'phone') {
+          redirectUrl = `tel:${config.value}`;
+        } else if (config.type === 'whatsapp') {
+          redirectUrl = `https://wa.me/${config.value.replace(/[^0-9]/g, '')}`;
+        }
+        
+        const result = await updateQRCode(editingQRId, {
+          title,
+          content: { value: config.value },
+          design_settings: {
+            size: config.size,
+            bgColor: config.bgColor,
+            fgColor: config.fgColor,
+            errorCorrectionLevel: config.errorCorrectionLevel,
+            dotStyle: config.dotStyle,
+            cornerSquareStyle: config.cornerSquareStyle,
+            cornerDotStyle: config.cornerDotStyle,
+            logo: config.logo,
+            logoSize: config.logoSize,
+          },
+          redirect_url: redirectUrl,
+          qr_image_url: assets.qrImageUrl,
+          logo_url: assets.logoUrl,
+        });
+        error = result.error;
+      } else {
+        const result = await saveQRCode(
+          config,
+          title,
+          user.id,
+          assets.qrImageUrl,
+          assets.logoUrl
+        );
+        error = result.error;
+      }
+      
+      if (error) {
+        alert(`Failed to ${editingQRId ? 'update' : 'save'} QR code: ` + error.message);
         setSaving(false);
-        alert(`🛡️ Request blocked\n\n${ddosCheck.reason || 'Too many requests. Please try again later.'}`);
-        return;
+      } else {
+        setSaved(true);
+        setSaving(false);
+        setTimeout(() => {
+          onDashboardNavigate();
+        }, 1000);
       }
-    }
-    
-    let error;
-    if (editingQRId) {
-      // Format redirect_url based on QR type
-      let redirectUrl = config.value;
-      if (config.type === 'email') {
-        redirectUrl = `mailto:${config.value}`;
-      } else if (config.type === 'phone') {
-        redirectUrl = `tel:${config.value}`;
-      } else if (config.type === 'whatsapp') {
-        redirectUrl = `https://wa.me/${config.value.replace(/[^0-9]/g, '')}`;
-      }
-      
-      const result = await updateQRCode(editingQRId, {
-        title,
-        content: { value: config.value },
-        design_settings: {
-          size: config.size,
-          bgColor: config.bgColor,
-          fgColor: config.fgColor,
-          errorCorrectionLevel: config.errorCorrectionLevel,
-          dotStyle: config.dotStyle,
-          cornerSquareStyle: config.cornerSquareStyle,
-          cornerDotStyle: config.cornerDotStyle,
-          logo: config.logo,
-          logoSize: config.logoSize,
-        },
-        redirect_url: redirectUrl,
-      });
-      error = result.error;
-    } else {
-      const result = await saveQRCode(config, title, user.id);
-      error = result.error;
-    }
-    
-    if (error) {
-      alert(`Failed to ${editingQRId ? 'update' : 'save'} QR code: ` + error.message);
+    } catch (error) {
+      console.error('Error saving QR code:', error);
+      alert(`Failed to ${editingQRId ? 'update' : 'save'} QR code: ${error instanceof Error ? error.message : 'Unknown error'}`);
       setSaving(false);
-    } else {
-      setSaved(true);
-      setSaving(false);
-      setTimeout(() => {
-        onDashboardNavigate();
-      }, 1000);
     }
   };
 

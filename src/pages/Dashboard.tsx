@@ -45,13 +45,27 @@ export const Dashboard = ({ onCreateNew, onEditQR, onViewAnalytics }: DashboardP
   };
 
   const handleToggleStatus = async (id: string, currentStatus: boolean) => {
-    const { error } = await updateQRStatus(id, !currentStatus);
-    if (!error) {
-      // Update local state immediately for better UX
+    try {
+      // Optimistically update UI
       setQrCodes(qrCodes.map(qr => 
         qr.id === id ? { ...qr, is_active: !currentStatus } : qr
       ));
-    } else {
+      
+      const { error } = await updateQRStatus(id, !currentStatus);
+      
+      if (error) {
+        // Revert on error
+        setQrCodes(qrCodes.map(qr => 
+          qr.id === id ? { ...qr, is_active: currentStatus } : qr
+        ));
+        alert('Failed to update QR code status: ' + error.message);
+      }
+    } catch (error) {
+      // Revert on error
+      setQrCodes(qrCodes.map(qr => 
+        qr.id === id ? { ...qr, is_active: currentStatus } : qr
+      ));
+      console.error('Error toggling QR code status:', error);
       alert('Failed to update QR code status');
     }
   };
@@ -241,14 +255,21 @@ interface QRCodeCardProps {
 
 const QRCodeCard = ({ qr, config, onDownload, onDelete, onEdit, onViewAnalytics, onToggleStatus }: QRCodeCardProps) => {
   const qrRef = useRef<HTMLDivElement>(null);
+  const [imageError, setImageError] = useState(false);
 
   useEffect(() => {
+    // If we have a stored QR image URL, don't regenerate
+    if (qr.qr_image_url && !imageError) {
+      return;
+    }
+    
+    // Fallback: regenerate QR code if no stored image or image failed to load
     if (qrRef.current) {
       qrRef.current.innerHTML = '';
       const qrCode = createQRCode({ ...config, size: 120 });
       qrCode.append(qrRef.current);
     }
-  }, [config]);
+  }, [config, qr.qr_image_url, imageError]);
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -291,7 +312,16 @@ const QRCodeCard = ({ qr, config, onDownload, onDelete, onEdit, onViewAnalytics,
         </div>
 
         <div className="bg-gray-50 rounded-lg p-4 flex items-center justify-center mb-4 relative">
-          <div ref={qrRef} style={{ width: '120px', height: '120px' }} />
+          {qr.qr_image_url && !imageError ? (
+            <img 
+              src={qr.qr_image_url} 
+              alt={qr.title}
+              className="w-[120px] h-[120px] object-contain"
+              onError={() => setImageError(true)}
+            />
+          ) : (
+            <div ref={qrRef} style={{ width: '120px', height: '120px' }} />
+          )}
           <div className="absolute top-2 right-2">
             <span className="inline-block px-2 py-1 bg-primary-100 text-primary-700 text-xs rounded-full font-medium">
               {qr.qr_type}

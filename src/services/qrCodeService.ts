@@ -13,6 +13,8 @@ export interface SavedQRCode {
   is_dynamic: boolean;
   scan_count: number;
   is_active: boolean;
+  qr_image_url?: string;
+  logo_url?: string;
   created_at: string;
   updated_at: string;
 }
@@ -29,7 +31,9 @@ const generateShortCode = (): string => {
 export const saveQRCode = async (
   config: QRConfig,
   title: string,
-  userId: string | null
+  userId: string | null,
+  qrImageUrl?: string,
+  logoUrl?: string
 ): Promise<{ data: SavedQRCode | null; error: any }> => {
   try {
     const shortCode = generateShortCode();
@@ -67,6 +71,8 @@ export const saveQRCode = async (
         short_code: shortCode,
         redirect_url: redirectUrl,
         is_dynamic: true,
+        qr_image_url: qrImageUrl,
+        logo_url: logoUrl,
       })
       .select()
       .single();
