@@ -167,3 +167,19 @@ export const incrementScanCount = async (
     return { error };
   }
 };
+
+export const updateQRStatus = async (
+  id: string,
+  isActive: boolean
+): Promise<{ error: any }> => {
+  try {
+    const { error } = await supabase
+      .from('qr_codes')
+      .update({ is_active: isActive })
+      .eq('id', id);
+
+    return { error };
+  } catch (error) {
+    return { error };
+  }
+};

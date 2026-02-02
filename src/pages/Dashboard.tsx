@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { getUserQRCodes, deleteQRCode, type SavedQRCode } from '../services/qrCodeService';
-import { QrCode, Trash2, Eye, Download, Copy, Calendar, BarChart3, Plus, ExternalLink, Edit } from 'lucide-react';
+import { getUserQRCodes, deleteQRCode, updateQRStatus, type SavedQRCode } from '../services/qrCodeService';
+import { QrCode, Trash2, Eye, Download, Copy, Calendar, BarChart3, Plus, ExternalLink, Edit, Search, Filter } from 'lucide-react';
 import { createQRCode, downloadQRCode } from '../utils/qrCode';
 import type { QRConfig } from '../types';
 
@@ -15,6 +15,9 @@ export const Dashboard = ({ onCreateNew, onEditQR, onViewAnalytics }: DashboardP
   const { user } = useAuth();
   const [qrCodes, setQrCodes] = useState<SavedQRCode[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filterType, setFilterType] = useState<string>('all');
+  const [filterStatus, setFilterStatus] = useState<string>('all');
 
   useEffect(() => {
     loadQRCodes();
@@ -33,11 +36,23 @@ export const Dashboard = ({ onCreateNew, onEditQR, onViewAnalytics }: DashboardP
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this QR code?')) return;
+    if (!window.confirm('Are you sure you want to delete this QR code?')) return;
     
     const { error } = await deleteQRCode(id);
     if (!error) {
-      setQrCodes(qrCodes.filter(qr => qr.id !== id));
+      loadQRCodes();
+    }
+  };
+
+  const handleToggleStatus = async (id: string, currentStatus: boolean) => {
+    const { error } = await updateQRStatus(id, !currentStatus);
+    if (!error) {
+      // Update local state immediately for better UX
+      setQrCodes(qrCodes.map(qr => 
+        qr.id === id ? { ...qr, is_active: !currentStatus } : qr
+      ));
+    } else {
+      alert('Failed to update QR code status');
     }
   };
 
@@ -75,18 +90,68 @@ export const Dashboard = ({ onCreateNew, onEditQR, onViewAnalytics }: DashboardP
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-7xl mx-auto px-4">
-        <div className="mb-8 flex justify-between items-center">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">My QR Codes</h1>
-            <p className="text-gray-600">Manage and track all your QR codes</p>
+        <div className="mb-6">
+          <div className="flex justify-between items-center mb-4">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900 mb-2">My QR Codes</h1>
+              <p className="text-gray-600">Manage and track your QR codes</p>
+            </div>
+            <button
+              onClick={onCreateNew}
+              className="flex items-center gap-2 px-6 py-3 bg-primary-500 hover:bg-primary-600 text-white rounded-lg transition-colors font-medium"
+            >
+              <Plus className="w-5 h-5" />
+              Create New QR Code
+            </button>
           </div>
-          <button
-            onClick={onCreateNew}
-            className="flex items-center gap-2 px-6 py-3 bg-primary-500 hover:bg-primary-600 text-white rounded-lg font-medium transition-colors shadow-lg"
-          >
-            <Plus className="w-5 h-5" />
-            Create New QR Code
-          </button>
+
+          {/* Search and Filter */}
+          <div className="flex flex-col md:flex-row gap-4">
+            {/* Search */}
+            <div className="flex-1 relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Search by title, type, or short code..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition-all"
+              />
+            </div>
+
+            {/* Filter by Type */}
+            <div className="relative">
+              <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+              <select
+                value={filterType}
+                onChange={(e) => setFilterType(e.target.value)}
+                className="pl-10 pr-8 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition-all appearance-none bg-white cursor-pointer"
+              >
+                <option value="all">All Types</option>
+                <option value="website">Website</option>
+                <option value="email">Email</option>
+                <option value="phone">Phone</option>
+                <option value="whatsapp">WhatsApp</option>
+                <option value="text">Text</option>
+                <option value="wifi">WiFi</option>
+                <option value="location">Location</option>
+                <option value="pdf">PDF</option>
+                <option value="video">Video</option>
+                <option value="image">Image</option>
+              </select>
+            </div>
+
+            {/* Filter by Status */}
+            <select
+              value={filterStatus}
+              onChange={(e) => setFilterStatus(e.target.value)}
+              className="px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition-all appearance-none bg-white cursor-pointer"
+            >
+              <option value="all">All Status</option>
+              <option value="active">Active</option>
+              <option value="inactive">Inactive</option>
+            </select>
+          </div>
         </div>
 
         {qrCodes.length === 0 ? (
@@ -110,7 +175,25 @@ export const Dashboard = ({ onCreateNew, onEditQR, onViewAnalytics }: DashboardP
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {qrCodes.map((qr) => {
+            {qrCodes
+              .filter((qr) => {
+                // Search filter
+                const matchesSearch = searchQuery === '' || 
+                  qr.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                  qr.qr_type.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                  qr.short_code.toLowerCase().includes(searchQuery.toLowerCase());
+                
+                // Type filter
+                const matchesType = filterType === 'all' || qr.qr_type === filterType;
+                
+                // Status filter
+                const matchesStatus = filterStatus === 'all' || 
+                  (filterStatus === 'active' && qr.is_active) ||
+                  (filterStatus === 'inactive' && !qr.is_active);
+                
+                return matchesSearch && matchesType && matchesStatus;
+              })
+              .map((qr) => {
               const qrConfig: QRConfig = {
                 type: qr.qr_type as any,
                 value: qr.content.value,
@@ -135,6 +218,7 @@ export const Dashboard = ({ onCreateNew, onEditQR, onViewAnalytics }: DashboardP
                   onDelete={() => handleDelete(qr.id)}
                   onEdit={() => onEditQR?.(qr)}
                   onViewAnalytics={() => onViewAnalytics?.(qr.id)}
+                  onToggleStatus={() => handleToggleStatus(qr.id, qr.is_active)}
                 />
               );
             })}
@@ -152,9 +236,10 @@ interface QRCodeCardProps {
   onDelete: () => void;
   onEdit: () => void;
   onViewAnalytics: () => void;
+  onToggleStatus: () => void;
 }
 
-const QRCodeCard = ({ qr, config, onDownload, onDelete, onEdit, onViewAnalytics }: QRCodeCardProps) => {
+const QRCodeCard = ({ qr, config, onDownload, onDelete, onEdit, onViewAnalytics, onToggleStatus }: QRCodeCardProps) => {
   const qrRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -180,13 +265,29 @@ const QRCodeCard = ({ qr, config, onDownload, onDelete, onEdit, onViewAnalytics 
           <div className="flex-1">
             <h3 className="font-semibold text-gray-900">{qr.title}</h3>
           </div>
-          <button
-            onClick={onViewAnalytics}
-            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-            title="View Analytics"
-          >
-            <Eye className="w-5 h-5 text-gray-600" />
-          </button>
+          <div className="flex items-center gap-2">
+            {/* Active/Inactive Toggle */}
+            <button
+              onClick={onToggleStatus}
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                qr.is_active ? 'bg-green-500' : 'bg-gray-300'
+              }`}
+              title={qr.is_active ? 'Active - Click to deactivate' : 'Inactive - Click to activate'}
+            >
+              <span
+                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                  qr.is_active ? 'translate-x-6' : 'translate-x-1'
+                }`}
+              />
+            </button>
+            <button
+              onClick={onViewAnalytics}
+              className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              title="View Analytics"
+            >
+              <Eye className="w-5 h-5 text-gray-600" />
+            </button>
+          </div>
         </div>
 
         <div className="bg-gray-50 rounded-lg p-4 flex items-center justify-center mb-4 relative">
