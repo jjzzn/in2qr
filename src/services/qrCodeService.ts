@@ -4,7 +4,6 @@ import type { QRConfig } from '../types';
 export interface SavedQRCode {
   id: string;
   user_id: string | null;
-  display_id?: string;
   qr_type: string;
   title: string;
   content: any;
