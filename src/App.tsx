@@ -76,7 +76,13 @@ function AppContent() {
   };
 
   const goBackToStep1 = () => {
-    setCurrentStep(1);
+    // If editing, return to dashboard instead of step 1
+    if (editingQR) {
+      setCurrentView('dashboard');
+      setEditingQR(null);
+    } else {
+      setCurrentStep(1);
+    }
   };
 
   const goBackToStep2 = () => {
@@ -210,6 +216,7 @@ function AppContent() {
           editingQRId={editingQR?.id}
           onCreateAnother={handleCreateAnother}
           onDashboardNavigate={() => setCurrentView('dashboard')}
+          onConfigChange={handleConfigChange}
         />
       )}
     </div>

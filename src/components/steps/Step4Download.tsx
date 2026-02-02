@@ -11,9 +11,10 @@ interface Step4DownloadProps {
   editingQRId?: string;
   onCreateAnother: () => void;
   onDashboardNavigate: () => void;
+  onConfigChange?: (updates: Partial<QRConfig>) => void;
 }
 
-export const Step4Download = ({ config, title, editingQRId, onCreateAnother, onDashboardNavigate }: Step4DownloadProps) => {
+export const Step4Download = ({ config, title, editingQRId, onCreateAnother, onDashboardNavigate, onConfigChange }: Step4DownloadProps) => {
   const [copied, setCopied] = useState(false);
   const [downloading, setDownloading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -201,7 +202,7 @@ export const Step4Download = ({ config, title, editingQRId, onCreateAnother, onD
                   {formats.map((format) => (
                     <button
                       key={format}
-                      onClick={() => {}}
+                      onClick={() => onConfigChange?.({ format })}
                       className={`
                         px-3 py-2 rounded-lg text-sm font-medium transition-all uppercase
                         ${config.format === format
