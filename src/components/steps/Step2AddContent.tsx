@@ -131,10 +131,10 @@ export const Step2AddContent = ({
               />
             </div>
           </div>
-        ) : (
+        ) : selectedType === 'text' ? (
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              {selectedType === 'email' ? 'Email Address' : selectedType === 'phone' ? 'Phone Number' : selectedType === 'whatsapp' ? 'WhatsApp Number' : selectedType === 'text' ? 'Text Message' : selectedType === 'location' ? 'GPS Coordinates' : 'Content'}
+              Text Message
             </label>
             <textarea
               value={value}
@@ -146,6 +146,19 @@ export const Step2AddContent = ({
             <div className="text-right text-sm text-gray-500 mt-2">
               {value.length} characters
             </div>
+          </div>
+        ) : (
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              {selectedType === 'email' ? 'Email Address' : selectedType === 'phone' ? 'Phone Number' : selectedType === 'whatsapp' ? 'WhatsApp Number' : selectedType === 'location' ? 'GPS Coordinates' : 'Content'}
+            </label>
+            <input
+              type={selectedType === 'email' ? 'email' : selectedType === 'phone' || selectedType === 'whatsapp' ? 'tel' : 'text'}
+              value={value}
+              onChange={(e) => onValueChange(e.target.value)}
+              placeholder={qrType?.placeholder}
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition-all"
+            />
           </div>
         )}
 
