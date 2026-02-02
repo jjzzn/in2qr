@@ -263,16 +263,17 @@ const QRCodeCard = ({ qr, config, isExpanded, onToggleExpand, onDownload, onDele
         <div className="border-t border-gray-200 p-4 bg-gray-50">
           <div className="text-sm">
             <p className="text-gray-600 mb-2">Destination:</p>
-            <p className="text-gray-900 break-all mb-3">{qr.content.value}</p>
+            <p className="text-gray-900 break-all mb-4">{qr.content.value}</p>
             <p className="text-gray-600 mb-2">Short Link:</p>
             <a 
               href={shortLinkUrl} 
               target="_blank" 
               rel="noopener noreferrer"
-              className="text-primary-600 hover:text-primary-700 hover:underline break-all flex items-center gap-1"
+              className="inline-flex items-center gap-2 text-primary-600 hover:text-primary-700 hover:underline break-all cursor-pointer relative z-10"
+              style={{ wordBreak: 'break-all' }}
             >
-              {shortLinkUrl}
-              <ExternalLink className="w-4 h-4" />
+              <span className="break-all">{shortLinkUrl}</span>
+              <ExternalLink className="w-4 h-4 flex-shrink-0" />
             </a>
           </div>
         </div>

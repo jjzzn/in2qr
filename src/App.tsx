@@ -9,13 +9,20 @@ import { Step4Download } from './components/steps/Step4Download';
 import { Login } from './pages/Login';
 import { Register } from './pages/Register';
 import { Dashboard } from './pages/Dashboard';
+import { QRRedirect } from './pages/QRRedirect';
 import type { WizardStep, QRCodeType, QRConfig } from './types';
 import type { SavedQRCode } from './services/qrCodeService';
 
-type AppView = 'generator' | 'login' | 'register' | 'dashboard';
+type AppView = 'generator' | 'login' | 'register' | 'dashboard' | 'qr-redirect';
 
 function AppContent() {
-  const [currentView, setCurrentView] = useState<AppView>('generator');
+  const [currentView, setCurrentView] = useState<AppView>(() => {
+    // Check if URL is a QR redirect
+    if (window.location.pathname.startsWith('/qr/')) {
+      return 'qr-redirect';
+    }
+    return 'generator';
+  });
   const [currentStep, setCurrentStep] = useState<WizardStep>(1);
   const [completedSteps, setCompletedSteps] = useState<WizardStep[]>([]);
   const [config, setConfig] = useState<QRConfig>({
@@ -152,6 +159,10 @@ function AppContent() {
         />
       </>
     );
+  }
+
+  if (currentView === 'qr-redirect') {
+    return <QRRedirect />;
   }
 
   return (
