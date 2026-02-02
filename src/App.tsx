@@ -11,10 +11,11 @@ import { Register } from './pages/Register';
 import { Dashboard } from './pages/Dashboard';
 import { QRRedirect } from './pages/QRRedirect';
 import { QRAnalytics } from './pages/QRAnalytics';
+import { MonitoringDashboard } from './pages/MonitoringDashboard';
 import type { WizardStep, QRCodeType, QRConfig } from './types';
 import type { SavedQRCode } from './services/qrCodeService';
 
-type AppView = 'generator' | 'login' | 'register' | 'dashboard' | 'qr-redirect' | 'analytics';
+type AppView = 'generator' | 'login' | 'register' | 'dashboard' | 'qr-redirect' | 'analytics' | 'monitoring';
 
 function AppContent() {
   const [currentView, setCurrentView] = useState<AppView>(() => {
@@ -179,6 +180,10 @@ function AppContent() {
 
   if (currentView === 'analytics' && selectedQRId) {
     return <QRAnalytics qrId={selectedQRId} onBack={() => setCurrentView('dashboard')} />;
+  }
+
+  if (currentView === 'monitoring') {
+    return <MonitoringDashboard onBack={() => setCurrentView('dashboard')} />;
   }
 
   return (

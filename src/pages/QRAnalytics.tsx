@@ -27,7 +27,7 @@ export const QRAnalytics = ({ qrId, onBack }: QRAnalyticsProps) => {
       const config: QRConfig = {
         type: qr.qr_type as any,
         value: qr.content.value,
-        size: qr.design_settings.size || 300,
+        size: 200,
         bgColor: qr.design_settings.bgColor || '#ffffff',
         fgColor: qr.design_settings.fgColor || '#000000',
         errorCorrectionLevel: qr.design_settings.errorCorrectionLevel || 'M',
