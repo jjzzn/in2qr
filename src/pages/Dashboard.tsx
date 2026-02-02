@@ -284,6 +284,13 @@ const QRCodeCard = ({ qr, config, onDownload, onDelete, onEdit, onViewAnalytics,
       <div className="p-6">
         <div className="flex items-start justify-between mb-4">
           <div className="flex-1">
+            <div className="flex items-center gap-2 mb-1">
+              {qr.display_id && (
+                <span className="text-xs font-mono text-gray-500 bg-gray-100 px-2 py-0.5 rounded">
+                  {qr.display_id}
+                </span>
+              )}
+            </div>
             <h3 className="font-semibold text-gray-900">{qr.title}</h3>
           </div>
           <div className="flex items-center gap-2">
@@ -311,17 +318,19 @@ const QRCodeCard = ({ qr, config, onDownload, onDelete, onEdit, onViewAnalytics,
           </div>
         </div>
 
-        <div className="bg-gray-50 rounded-lg p-4 flex items-center justify-center mb-4 relative">
-          {qr.qr_image_url && !imageError ? (
-            <img 
-              src={qr.qr_image_url} 
-              alt={qr.title}
-              className="w-[120px] h-[120px] object-contain"
-              onError={() => setImageError(true)}
-            />
-          ) : (
-            <div ref={qrRef} style={{ width: '120px', height: '120px' }} />
-          )}
+        <div className="bg-gray-100 rounded-lg p-8 flex items-center justify-center mb-4 relative">
+          <div style={{ padding: '20px', backgroundColor: config.bgColor }}>
+            {qr.qr_image_url && !imageError ? (
+              <img 
+                src={qr.qr_image_url} 
+                alt={qr.title}
+                className="w-[120px] h-[120px] object-contain"
+                onError={() => setImageError(true)}
+              />
+            ) : (
+              <div ref={qrRef} style={{ width: '120px', height: '120px' }} />
+            )}
+          </div>
           <div className="absolute top-2 right-2">
             <span className="inline-block px-2 py-1 bg-primary-100 text-primary-700 text-xs rounded-full font-medium">
               {qr.qr_type}
