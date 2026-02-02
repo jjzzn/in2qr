@@ -4,7 +4,7 @@ import type { QRConfig } from '../../types';
 import { createQRCode, downloadQRCode, copyQRToClipboard } from '../../utils/qrCode';
 import { useAuth } from '../../contexts/AuthContext';
 import { saveQRCode, updateQRCode } from '../../services/qrCodeService';
-import { checkRateLimit, logRequest, getRateLimitMessage, type RateLimitError } from '../../lib/rateLimiter';
+import { checkDDoSProtection } from '../../lib/ddosProtection';
 
 interface Step4DownloadProps {
   config: QRConfig;
@@ -79,23 +79,15 @@ export const Step4Download = ({ config, title, editingQRId, onCreateAnother, onD
 
     setSaving(true);
     
-    try {
-      // Check rate limit before creating new QR code (skip for edits)
-      if (!editingQRId) {
-        await checkRateLimit('/api/create-qr', {
-          maxRequests: 10,  // จำกัด 10 QR codes
-          windowMs: 60 * 60 * 1000  // ต่อชั่วโมง
-        });
+    // Check DDoS protection before creating new QR code (skip for edits)
+    if (!editingQRId) {
+      const ddosCheck = await checkDDoSProtection('/api/create-qr');
+      
+      if (!ddosCheck.allowed) {
+        setSaving(false);
+        alert(`🛡️ Request blocked\n\n${ddosCheck.reason || 'Too many requests. Please try again later.'}`);
+        return;
       }
-    } catch (error: any) {
-      setSaving(false);
-      if ((error as RateLimitError).rateLimitInfo) {
-        // ถูก rate limit
-        alert(getRateLimitMessage(error as RateLimitError));
-      } else {
-        alert('เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง');
-      }
-      return;
     }
     
     let error;
@@ -136,15 +128,6 @@ export const Step4Download = ({ config, title, editingQRId, onCreateAnother, onD
       alert(`Failed to ${editingQRId ? 'update' : 'save'} QR code: ` + error.message);
       setSaving(false);
     } else {
-      // Log successful QR code creation
-      if (!editingQRId) {
-        await logRequest('/api/create-qr', {
-          qr_type: config.type,
-          title: title,
-          success: true,
-        });
-      }
-      
       setSaved(true);
       setSaving(false);
       setTimeout(() => {
