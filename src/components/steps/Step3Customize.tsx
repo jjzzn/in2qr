@@ -27,11 +27,9 @@ export const Step3Customize = ({ config, onConfigChange, onNext, onBack }: Step3
   const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        onConfigChange({ logo: event.target?.result as string });
-      };
-      reader.readAsDataURL(file);
+      // Create blob URL instead of data URL to avoid CSP issues
+      const blobUrl = URL.createObjectURL(file);
+      onConfigChange({ logo: blobUrl });
     }
   };
 
